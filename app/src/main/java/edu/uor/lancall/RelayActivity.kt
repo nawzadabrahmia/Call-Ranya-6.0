@@ -111,7 +111,7 @@ fun RelayScreen(onBack: () -> Unit) {
                                     val f = Relay.exportCsv()
                                     val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
                                     ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/csv")
-                                        .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), tr("export_csv")))
+                                        .putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), L.t("export_csv")))
                                 }.onFailure { Toast.makeText(ctx, it.message ?: "error", Toast.LENGTH_LONG).show() }
                             }) { Text(tr("export_csv")) }
                             TextButton(onClick = { Relay.clearLog() }) { Text(tr("clear_log")) }
