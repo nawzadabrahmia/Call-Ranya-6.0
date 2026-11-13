@@ -1,26 +1,95 @@
-name: Android CI
+name: Build Call Ranya
 
 on:
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [ main, master ]
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '11'
-        distribution: 'temurin'
-        cache: gradle
+      - uses: actions/checkout@v5
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Build APK
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TURN_URLS: ${{ secrets.TURN_URLS }}
+          TURN_USER: ${{ secrets.TURN_USER }}
+          TURN_PASS: ${{ secrets.TURN_PASS }}
+        run: gradle assembleDebug --no-daemon --stacktrace
+
+      - name: Rename APK
+        run: cp app/build/outputs/apk/debug/app-debug.apk Call-Ranya.apk
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Call-Ranya-APK
+          path: Call-Ranya.apk
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Write internet config (from GitHub Secrets)
+        shell: bash
+        working-directory: desktop
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          TURN_URLS: ${{ secrets.TURN_URLS }}
+          TURN_USER: ${{ secrets.TURN_USER }}
+          TURN_PASS: ${{ secrets.TURN_PASS }}
+        run: node -e "require('fs').writeFileSync('config.json', JSON.stringify({SUPABASE_URL:process.env.SUPABASE_URL||'',SUPABASE_KEY:process.env.SUPABASE_KEY||'',TURN_URLS:process.env.TURN_URLS||'',TURN_USER:process.env.TURN_USER||'',TURN_PASS:process.env.TURN_PASS||''}))"
+
+      - name: Build Windows app (portable + installer)
+        working-directory: desktop
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npx electron-builder --win portable nsis --x64 --publish never
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Call-Ranya-Windows
+          path: |
+            desktop/dist/Call-Ranya-Portable.exe
+            desktop/dist/Call-Ranya-Setup.exe
+
+  release:
+    needs: [build, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: out
+      - name: Publish release (direct download links)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: build-${{ github.run_number }}
+          name: Call Ranya – build ${{ github.run_number }}
+          files: |
+            out/Call-Ranya-APK/Call-Ranya.apk
+            out/Call-Ranya-Windows/Call-Ranya-Portable.exe
+            out/Call-Ranya-Windows/Call-Ranya-Setup.exe
+          make_latest: true
