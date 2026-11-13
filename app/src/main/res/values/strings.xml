@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Call Ranya</string>
+    <string name="rs_access_label">Call Ranya remote support</string>
+    <string name="rs_access_desc">Lets a helper you trust tap and type on this phone during a remote-support session that you accepted. It does nothing at any other time, reads nothing and records nothing. You can stop a session at any moment.</string>
+</resources>

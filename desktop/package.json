@@ -1,0 +1,37 @@
+{
+  "name": "uor-call-desktop",
+  "productName": "Call Ranya",
+  "version": "6.0.0",
+  "description": "Call Ranya for Windows – encrypted calls, video, chat, safety check-ins and consent-based remote support",
+  "author": "University of Raparin – English Department",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable nsis --x64 --publish never"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4",
+    "ws": "8.18.3"
+  },
+  "devDependencies": {
+    "electron": "37.10.3",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "edu.uor.lancall.desktop",
+    "productName": "Call Ranya",
+    "artifactName": "Call-Ranya-${version}-${arch}-${target}.${ext}",
+    "files": ["main.js", "preload.js", "lib/**", "renderer/**", "build/icon.png", "package.json"],
+    "extraResources": [
+      { "from": "input.ps1", "to": "input.ps1" },
+      { "from": "config.json", "to": "config.json" }
+    ],
+    "win": {
+      "icon": "build/icon.png",
+      "target": ["portable", "nsis"]
+    },
+    "portable": { "artifactName": "Call-Ranya-Portable.exe" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "artifactName": "Call-Ranya-Setup.exe", "createDesktopShortcut": true }
+  }
+}
